@@ -2483,6 +2483,103 @@ namespace MetalPerformanceShaders {
 		IntPtr Constructor (NSCoder aDecoder, IMTLDevice device);
 	}
 
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (13,0), Mac (10,15), iOS (13,0)]
+	[BaseType (typeof(NSObject))]
+	interface MPSMatrixRandomDistributionDescriptor : NSCopying
+	{
+		[Export ("distributionType", ArgumentSemantic.Assign)]
+		MPSMatrixRandomDistribution DistributionType { get; set; }
+
+		[Export ("minimum")]
+		float Minimum { get; set; }
+
+		[Export ("maximum")]
+		float Maximum { get; set; }
+
+		[Export ("mean")]
+		float Mean { get; set; }
+
+		[Export ("standardDeviation")]
+		float StandardDeviation { get; set; }
+
+		[Static]
+		[Export ("uniformDistributionDescriptorWithMinimum:maximum:")]
+		MPSMatrixRandomDistributionDescriptor CreateUniform (float minimum, float maximum);
+
+		[Static]
+		[Export ("defaultDistributionDescriptor")]
+		MPSMatrixRandomDistributionDescriptor Default { get; }
+	}
+
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (13,0), Mac (10,15), iOS (13,0)]
+	[BaseType (typeof(MPSKernel))]
+	interface MPSMatrixRandom
+	{
+		[Export ("destinationDataType")]
+		MPSDataType DestinationDataType { get; }
+
+		[Export ("distributionType")]
+		MPSMatrixRandomDistribution DistributionType { get; }
+
+		[Export ("batchStart")]
+		nuint BatchStart { get; set; }
+
+		[Export ("batchSize")]
+		nuint BatchSize { get; set; }
+
+		[Export ("encodeToCommandBuffer:destinationVector:")]
+		void EncodeToCommandBuffer (IMTLCommandBuffer commandBuffer, MPSVector destinationVector);
+
+		[Export ("encodeToCommandBuffer:destinationMatrix:")]
+		void EncodeToCommandBuffer (IMTLCommandBuffer commandBuffer, MPSMatrix destinationMatrix);
+	}
+
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (13,0), Mac (10,15), iOS (13,0)]
+	[BaseType (typeof(MPSMatrixRandom))]
+	interface MPSMatrixRandomMTGP32
+	{
+		[Export ("initWithDevice:")]
+		IntPtr Constructor (IMTLDevice device);
+
+		[Export ("initWithDevice:destinationDataType:seed:distributionDescriptor:")]
+		[DesignatedInitializer]
+		IntPtr Constructor (IMTLDevice device, MPSDataType destinationDataType, nuint seed, MPSMatrixRandomDistributionDescriptor distributionDescriptor);
+
+		[Export ("synchronizeStateOnCommandBuffer:")]
+		void Synchronize (IMTLCommandBuffer commandBuffer);
+
+		[Export ("initWithDevice:destinationDataType:seed:")]
+		IntPtr Constructor (IMTLDevice device, MPSDataType destinationDataType, nuint seed);
+
+		[Export ("initWithCoder:device:")]
+		[DesignatedInitializer]
+		IntPtr Constructor (NSCoder decoder, IMTLDevice device);
+	}
+
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (13,0), Mac (10,15), iOS (13,0)]
+	[BaseType (typeof(MPSMatrixRandom))]
+	interface MPSMatrixRandomPhilox
+	{
+		[Export ("initWithDevice:")]
+		IntPtr Constructor (IMTLDevice device);
+
+		[Export ("initWithDevice:destinationDataType:seed:distributionDescriptor:")]
+		[DesignatedInitializer]
+		IntPtr Constructor (IMTLDevice device, MPSDataType destinationDataType, nuint seed, MPSMatrixRandomDistributionDescriptor distributionDescriptor);
+
+		[Export ("initWithDevice:destinationDataType:seed:")]
+		IntPtr Constructor (IMTLDevice device, MPSDataType destinationDataType, nuint seed);
+
+		[Export ("initWithCoder:device:")]
+		[DesignatedInitializer]
+		IntPtr Constructor (NSCoder aDecoder, IMTLDevice device);
+	}
+
+
 	[TV (11,0), Mac (10, 13), iOS (11,0)]
 	[DisableDefaultCtor]
 	[BaseType (typeof(MPSKernel))]
@@ -3671,6 +3768,7 @@ namespace MetalPerformanceShaders {
 	[TV (12,0), Mac (10,14), iOS (12,0)]
 	delegate void MPSGradientNodeHandler (MPSNNFilterNode gradientNode, MPSNNFilterNode inferenceNode, MPSNNImageNode inferenceSource, MPSNNImageNode gradientSource);
 
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
 	[TV (11,0), Mac (10, 13), iOS (11,0)]
 	[BaseType (typeof (NSObject))]
 	[DisableDefaultCtor]
@@ -3690,22 +3788,27 @@ namespace MetalPerformanceShaders {
 		[NullAllowed, Export ("label")]
 		string Label { get; set; }
 
+		[Introduced (PlatformName.MacCatalyst, 13, 0)]
 		[TV (12,0), Mac (10,14), iOS (12,0)]
 		[Export ("gradientFilterWithSource:")]
 		MPSNNGradientFilterNode GetFilter (MPSNNImageNode gradientImageSource);
 
+		[Introduced (PlatformName.MacCatalyst, 13, 0)]
 		[TV (12,0), Mac (10,14), iOS (12,0)]
 		[Export ("gradientFilterWithSources:")]
 		MPSNNGradientFilterNode GetFilter (MPSNNImageNode[] gradientImagesSources);
 
+		[Introduced (PlatformName.MacCatalyst, 13, 0)]
 		[TV (12,0), Mac (10,14), iOS (12,0)]
 		[Export ("gradientFiltersWithSources:")]
 		MPSNNGradientFilterNode [] GetFilters (MPSNNImageNode[] gradientImagesSources);
 
+		[Introduced (PlatformName.MacCatalyst, 13, 0)]
 		[TV (12,0), Mac (10,14), iOS (12,0)]
 		[Export ("gradientFiltersWithSource:")]
 		MPSNNGradientFilterNode [] GetFilters (MPSNNImageNode gradientImageSource);
 
+		[Introduced (PlatformName.MacCatalyst, 13, 0)]
 		[TV (12,0), Mac (10,14), iOS (12,0)]
 		[Export ("trainingGraphWithSourceGradient:nodeHandler:")]
 		[return: NullAllowed]
@@ -5213,6 +5316,148 @@ namespace MetalPerformanceShaders {
 		double ScaleFactorY { get; }
 	}
 
+	interface IMPSNNLossCallback { }
+
+	[Protocol]
+	[BaseType (typeof(NSObject))]
+	[Model]
+	interface MPSNNLossCallback : NSSecureCoding, NSCopying
+	{
+		[Abstract]
+		[Export ("scalarWeightForSourceImage:destinationImage:")]
+		float GetScalarWeight (MPSImage sourceImage, MPSImage destinationImage);
+	}
+
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (13,0), Mac (10,15), iOS (13,0)]
+	[BaseType (typeof(MPSNNFilterNode))]
+	interface MPSNNForwardLossNode
+	{
+		[Export ("lossType")]
+		MPSCnnLossType LossType { get; }
+
+		[Export ("reductionType")]
+		MPSCnnReductionType ReductionType { get; }
+
+		[Export ("numberOfClasses")]
+		nuint NumberOfClasses { get; }
+
+		[Export ("weight")]
+		float Weight { get; }
+
+		[Export ("labelSmoothing")]
+		float LabelSmoothing { get; }
+
+		[Export ("epsilon")]
+		float Epsilon { get; }
+
+		[Export ("delta")]
+		float Delta { get; }
+
+		[NullAllowed, Export ("propertyCallBack", ArgumentSemantic.Retain)]
+		IMPSNNLossCallback PropertyCallBack { get; set; }
+
+		[Static]
+		[Export ("nodeWithSource:labels:weights:lossDescriptor:")]
+		MPSNNForwardLossNode Create (MPSNNImageNode source, MPSNNImageNode labels, MPSNNImageNode weights, MPSCnnLossDescriptor descriptor);
+
+		[Static]
+		[Export ("nodeWithSource:labels:lossDescriptor:")]
+		MPSNNForwardLossNode Create (MPSNNImageNode source, MPSNNImageNode labels, MPSCnnLossDescriptor descriptor);
+
+		[Static]
+		[Export ("nodeWithSources:lossDescriptor:")]
+		MPSNNForwardLossNode Create (MPSNNImageNode[] sourceNodes, MPSCnnLossDescriptor descriptor);
+
+		[Export ("initWithSource:labels:weights:lossDescriptor:")]
+		IntPtr Constructor (MPSNNImageNode source, MPSNNImageNode labels, [NullAllowed] MPSNNImageNode weights, MPSCnnLossDescriptor descriptor);
+
+		[Export ("initWithSource:labels:lossDescriptor:")]
+		IntPtr Constructor (MPSNNImageNode source, MPSNNImageNode labels, MPSCnnLossDescriptor descriptor);
+
+		[Export ("initWithSources:lossDescriptor:")]
+		IntPtr Constructor (MPSNNImageNode[] sourceNodes, MPSCnnLossDescriptor descriptor);
+
+		[Export ("gradientFilterWithSources:")]
+		MPSNNLossGradientNode GetFilter (MPSNNImageNode[] sourceGradient);
+
+		[Export ("gradientFiltersWithSources:")]
+		MPSNNLossGradientNode[] GetFilters (MPSNNImageNode[] sourceGradient);
+
+		[Export ("gradientFilterWithSource:")]
+		MPSNNLossGradientNode GetFilter (MPSNNImageNode sourceGradient);
+
+		[Export ("gradientFiltersWithSource:")]
+		MPSNNLossGradientNode[] GetFilters (MPSNNImageNode sourceGradient);
+	}
+
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (13,0), Mac (10,15,0), iOS (13,0)]
+	[BaseType (typeof(MPSNNGradientFilterNode))]
+	interface MPSNNLossGradientNode
+	{
+		[Export ("lossType")]
+		MPSCnnLossType LossType { get; }
+
+		[Export ("reductionType")]
+		MPSCnnReductionType ReductionType { get; }
+
+		[Export ("numberOfClasses")]
+		nuint NumberOfClasses { get; }
+
+		[Export ("weight")]
+		float Weight { get; }
+
+		[Export ("labelSmoothing")]
+		float LabelSmoothing { get; }
+
+		[Export ("epsilon")]
+		float Epsilon { get; }
+
+		[Export ("delta")]
+		float Delta { get; }
+
+		[Export ("isLabelsGradientFilter")]
+		bool IsLabelsGradientFilter { get; }
+
+		[NullAllowed, Export ("propertyCallBack", ArgumentSemantic.Retain)]
+		IMPSNNLossCallback PropertyCallBack { get; set; }
+
+		[Static]
+		[Export ("nodeWithSourceGradient:sourceImage:labels:weights:gradientState:lossDescriptor:isLabelsGradientFilter:")]
+		MPSNNLossGradientNode Create (MPSNNImageNode sourceGradient, MPSNNImageNode sourceImage, MPSNNImageNode labels, MPSNNImageNode weights, [NullAllowed] MPSNNGradientStateNode gradientState, MPSCnnLossDescriptor descriptor, bool isLabelsGradientFilter);
+
+		[Static]
+		[Export ("nodeWithSourceGradient:sourceImage:labels:gradientState:lossDescriptor:isLabelsGradientFilter:")]
+		MPSNNLossGradientNode Create (MPSNNImageNode sourceGradient, MPSNNImageNode sourceImage, MPSNNImageNode labels, [NullAllowed] MPSNNGradientStateNode gradientState, MPSCnnLossDescriptor descriptor, bool isLabelsGradientFilter);
+
+		[Static]
+		[Export ("nodeWithSources:gradientState:lossDescriptor:isLabelsGradientFilter:")]
+		MPSNNLossGradientNode Create (MPSNNImageNode[] sourceNodes, [NullAllowed] MPSNNGradientStateNode gradientState, MPSCnnLossDescriptor descriptor, bool isLabelsGradientFilter);
+
+		[Export ("initWithSourceGradient:sourceImage:labels:weights:gradientState:lossDescriptor:isLabelsGradientFilter:")]
+		IntPtr Constructor (MPSNNImageNode sourceGradient, MPSNNImageNode sourceImage, MPSNNImageNode labels, [NullAllowed] MPSNNImageNode weights, [NullAllowed] MPSNNGradientStateNode gradientState, MPSCnnLossDescriptor descriptor, bool isLabelsGradientFilter);
+
+		[Export ("initWithSourceGradient:sourceImage:labels:gradientState:lossDescriptor:isLabelsGradientFilter:")]
+		IntPtr Constructor (MPSNNImageNode sourceGradient, MPSNNImageNode sourceImage, MPSNNImageNode labels, [NullAllowed] MPSNNGradientStateNode gradientState, MPSCnnLossDescriptor descriptor, bool isLabelsGradientFilter);
+
+		[Export ("initWithSources:gradientState:lossDescriptor:isLabelsGradientFilter:")]
+		IntPtr Constructor (MPSNNImageNode[] sourceNodes, [NullAllowed] MPSNNGradientStateNode gradientState, MPSCnnLossDescriptor descriptor, bool isLabelsGradientFilter);
+	}
+
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (13,0), Mac (10,15,0), iOS (13,0)]
+	[BaseType (typeof(MPSNNFilterNode))]
+	interface MPSNNInitialGradientNode
+	{
+		[Static]
+		[Export ("nodeWithSource:")]
+		MPSNNInitialGradientNode Create (MPSNNImageNode source);
+
+		[Export ("initWithSource:")]
+		IntPtr Constructor (MPSNNImageNode source);
+	}
+
 	[TV (11,0), Mac (10, 13), iOS (11,0)]
 	[BaseType (typeof(MPSKernel))]
 	[DisableDefaultCtor] // There is a DesignatedInitializer, file a bug if needed.
@@ -5235,18 +5480,18 @@ namespace MetalPerformanceShaders {
 		[Export ("initWithDevice:resultImage:")]
 		IntPtr Constructor (IMTLDevice device, MPSNNImageNode resultImage);
 
-		// TODO: Review in Xcode 12 / iOS 13
-		// Looks like the following two were exposed ahead of their time
-		// [TV (13,0), Mac (10,15), iOS (13,0)]
-		// [Export ("initWithDevice:resultImages:resultsAreNeeded:")]
-		// [DesignatedInitializer]
-		// IntPtr Constructor (MTLDevice device, MPSNNImageNode[] resultImages, [NullAllowed] bool* areResultsNeeded);
+		[Introduced (PlatformName.MacCatalyst, 13, 0)]
+		[TV (13,0), Mac (10,15), iOS (13,0)]
+		[Export ("initWithDevice:resultImages:resultsAreNeeded:")]
+		[DesignatedInitializer]
+		IntPtr Constructor (IMTLDevice device, MPSNNImageNode[] resultImages, IntPtr resultsAreNeeded);
 
-		// [TV (13,0), Mac (10,15), iOS (13,0)]
-		// [Static]
-		// [Export ("graphWithDevice:resultImages:resultsAreNeeded:")]
-		// [return: NullAllowed]
-		// MPSNNGraph GraphWithDevice (MTLDevice device, MPSNNImageNode[] resultImages, [NullAllowed] bool* areResultsNeeded);
+		[Introduced (PlatformName.MacCatalyst, 13, 0)]
+		[TV (13,0), Mac (10,15), iOS (13,0)]
+		[Static]
+		[Export ("graphWithDevice:resultImages:resultsAreNeeded:")]
+		[return: NullAllowed]
+		MPSNNGraph Create (IMTLDevice device, MPSNNImageNode[] resultImages, IntPtr resultsAreNeeded);
 
 		// Not added because it short lived a couple of minor releases and there are alternatives.
 		//[Deprecated (PlatformName.TvOS, 11, 3)]
@@ -7255,6 +7500,7 @@ namespace MetalPerformanceShaders {
 		void EncodeBatch (IMTLCommandBuffer commandBuffer, NSArray<MPSImage> sourceGradients, NSArray<MPSImage> sourceImages, NSArray<MPSState> gradientStates, NSArray<MPSImage> destinationGradients);
 	}
 
+	// [Introduced (PlatformName.MacCatalyst, 13, 0)]
 	[TV (11,3), Mac (10,13,4), iOS (11,3)]
 	[BaseType (typeof (NSObject), Name = "MPSCNNLossDataDescriptor")]
 	[DisableDefaultCtor]
