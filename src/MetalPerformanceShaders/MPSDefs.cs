@@ -180,12 +180,22 @@ namespace MetalPerformanceShaders {
 		public Vector4 MaxPixelValue;
 	}
 
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
 	[TV (11, 0), Mac (10, 13), iOS (11, 0)]
 	public enum MPSMatrixDecompositionStatus {
 		Success = 0,
 		Failure = -1,
 		Singular = -2,
 		NonPositiveDefinite = -3,
+	}
+
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[Flags]
+	[Native]
+	public enum MPSMatrixRandomDistribution : ulong
+	{
+		Default = 0x1,
+		Uniform = 0x2,
 	}
 
 	// MPSTypes.h
@@ -447,7 +457,8 @@ namespace MetalPerformanceShaders {
 		GreaterOrEqual,
 	}
 
-	[TV (11, 3), Mac (10, 13, 4), iOS (11, 3)]
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (11,3), Mac (10,13,4), iOS (11,3)]
 	public enum MPSCnnLossType : uint {
 		MeanAbsoluteError = 0,
 		MeanSquaredError,
@@ -462,7 +473,8 @@ namespace MetalPerformanceShaders {
 		//Count, // must always be last, and because of this it will cause breaking changes.
 	}
 
-	[TV (11, 3), Mac (10, 13, 4), iOS (11, 3)]
+	[Introduced (PlatformName.MacCatalyst, 13, 0)]
+	[TV (11,3), Mac (10,13,4), iOS (11,3)]
 	public enum MPSCnnReductionType {
 		None = 0,
 		Sum,

@@ -154,7 +154,7 @@ namespace Metal {
 
 		[Abstract, Export ("contents")]
 		IntPtr Contents { get; }
-#if MONOMAC
+#if MONOMAC // TODO: Enable for Catalyst
 		[Abstract, Export ("didModifyRange:")]
 		void DidModify (NSRange range);
 #endif
