@@ -75,11 +75,11 @@ namespace Xamarin.MacDev.Tasks {
 			}
 		}
 
-		protected string GetSdkPlatform (bool isSimulator)
+		protected string GetSdkPlatform (bool isSimulator, bool isMacCatalyst)
 		{
 			switch (Platform) {
 			case ApplePlatform.iOS:
-				return isSimulator ? "iPhoneSimulator" : "iPhoneOS";
+				return isMacCatalyst ? "MacOSX" : (isSimulator ? "iPhoneSimulator" : "iPhoneOS");
 			case ApplePlatform.TVOS:
 				return isSimulator ? "AppleTVSimulator" : "AppleTVOS";
 			case ApplePlatform.WatchOS:

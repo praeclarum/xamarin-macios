@@ -908,7 +908,7 @@ namespace Xamarin.Bundler {
 		{
 			switch (app.Platform) {
 			case ApplePlatform.iOS:
-				return app.IsDeviceBuild ? "iPhoneOS" : "iPhoneSimulator";
+				return app.IsMacCatalystBuild ? "MacOSX" : (app.IsDeviceBuild ? "iPhoneOS" : "iPhoneSimulator");
 			case ApplePlatform.WatchOS:
 				return app.IsDeviceBuild ? "WatchOS" : "WatchSimulator";
 			case ApplePlatform.TVOS:

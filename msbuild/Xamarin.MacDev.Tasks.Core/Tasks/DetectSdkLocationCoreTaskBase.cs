@@ -73,7 +73,7 @@ namespace Xamarin.MacDev.Tasks {
 
 		protected void EnsureSdkPath ()
 		{
-			SdkPlatform = GetSdkPlatform (SdkIsSimulator);
+			SdkPlatform = GetSdkPlatform (SdkIsSimulator, SdkIsMacCatalyst);
 
 			var currentSdk = CurrentSdk;
 			IAppleSdkVersion requestedSdkVersion;

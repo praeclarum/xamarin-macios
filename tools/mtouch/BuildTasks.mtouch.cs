@@ -401,6 +401,13 @@ namespace Xamarin.Bundler
 			set { compiler_flags = value; }
 		}
 
+		public static void GetMacCatalystArchFlags (CompilerFlags flags, params Abi [] abis)
+		{
+			var target = "x86_64-apple-ios13.4-macabi";
+			Console.WriteLine ($"FRANK SET CAT TARGET TO {target}");
+			flags.AddOtherFlag ("-target", target);
+		}
+
 		public static void GetArchFlags (CompilerFlags flags, params Abi [] abis)
 		{
 			GetArchFlags (flags, (IEnumerable<Abi>) abis);
@@ -469,6 +476,30 @@ namespace Xamarin.Bundler
 				flags.AddDefine (defines.Replace (" ", String.Empty));
 		}
 
+		public static void GetMacCatalystCompilerFlags (CompilerFlags flags, bool is_assembler, Application app, string language = null)
+		{
+			GetCompilerFlags (app, flags, is_assembler, language);
+
+			string sim_platform = Driver.GetPlatformDirectory (app);
+			string plist = Path.Combine (sim_platform, "Info.plist");
+
+			var dict = Driver.FromPList (plist);
+			var dp = dict.Get<PDictionary> ("DefaultProperties");
+			if (dp.GetString ("GCC_OBJC_LEGACY_DISPATCH") == "YES")
+				flags.AddOtherFlag ("-fobjc-legacy-dispatch");
+			string objc_abi = dp.GetString ("OBJC_ABI_VERSION");
+			if (!String.IsNullOrWhiteSpace (objc_abi))
+				flags.AddOtherFlag ($"-fobjc-abi-version={objc_abi}");
+
+			plist = Path.Combine (Driver.GetFrameworkDirectory (app), "SDKSettings.plist");
+			string min_prefix = app.CompilerPath.Contains ("clang") ? Driver.GetTargetMinSdkName (app) : "iphoneos";
+			dict = Driver.FromPList (plist);
+			dp = dict.Get<PDictionary> ("DefaultProperties");
+			string defines = dp.GetString ("GCC_PRODUCT_TYPE_PREPROCESSOR_DEFINITIONS");
+			if (!String.IsNullOrWhiteSpace (defines))
+				flags.AddDefine (defines.Replace (" ", String.Empty));
+		}
+
 		void GetDeviceCompilerFlags (CompilerFlags flags, bool is_assembler)
 		{
 			GetCompilerFlags (App, flags, is_assembler, Language);
@@ -515,7 +546,9 @@ namespace Xamarin.Bundler
 
 		protected async Task<int> CompileAsync ()
 		{
-			if (App.IsDeviceBuild) {
+			if (App.IsMacCatalystBuild) {
+				GetMacCatalystCompilerFlags (CompilerFlags, IsAssembler, App, Language);
+			} else if (App.IsDeviceBuild) {
 				GetDeviceCompilerFlags (CompilerFlags, IsAssembler);
 			} else {
 				GetSimulatorCompilerFlags (CompilerFlags, IsAssembler, App, Language);
@@ -523,7 +556,12 @@ namespace Xamarin.Bundler
 
 			if (App.EnableBitCode)
 				GetBitcodeCompilerFlags (CompilerFlags);
-			GetArchFlags (CompilerFlags, Abi);
+
+			if (App.IsMacCatalystBuild) {
+				GetMacCatalystArchFlags (CompilerFlags, Abi);
+			} else {
+				GetArchFlags (CompilerFlags, Abi);
+			}
 
 			if (SharedLibrary) {
 				GetSharedCompilerFlags (CompilerFlags, InstallName);

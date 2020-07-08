@@ -72,6 +72,8 @@ namespace Xamarin.Bundler
 			}
 		}
 
+		public bool IsMacCatalyst { get; set; }
+
 		// If this is an app extension, this returns the equivalent (32/64bit) target for the container app.
 		// This may be null (it's possible to build an extension for 32+64bit, and the main app only for 64-bit, for instance.
 		public Target ContainerTarget {

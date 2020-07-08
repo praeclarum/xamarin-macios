@@ -988,7 +988,18 @@ namespace Xamarin.Bundler {
 					throw new ProductException (3, true, Errors.MX0003, root_wo_ext);
 			}
 
-			if (IsDualBuild) {
+			if (IsMacCatalystBuild) {
+				var target = new Target (this);
+
+				target.ArchDirectory = Path.Combine (Cache.Location, "maccatalyst64");
+				target.TargetDirectory = Path.Combine (target.ArchDirectory, "Output");
+				target.AppTargetDirectory = Path.Combine (AppDirectory, ".maccatalyst-64");
+				target.Resolver.ArchDirectory = Driver.GetArchDirectory (this, true);
+				target.Abis = new List<Abi> { Abi.x86_64 };
+				target.IsMacCatalyst = true;
+				Console.WriteLine("FRANK ADD CATALYST TARGET");
+				Targets.Add (target);
+			} else if (IsDualBuild) {
 				var target32 = new Target (this);
 				var target64 = new Target (this);
 
