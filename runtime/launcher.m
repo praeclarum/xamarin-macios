@@ -212,6 +212,7 @@ exit_with_message (const char *reason, const char *argv0, bool request_mono)
 		appName = [[NSString stringWithUTF8String: argv0] lastPathComponent];
 	}
 
+#ifndef NO_NSALERT
 	NSAlert *alert = [[NSAlert alloc] init];
 	[alert setMessageText:[NSString stringWithFormat:@"Could not launch %@", appName]];
 	NSString *fmt = request_mono ? @"%s\n\nPlease download and install the latest version of Mono." : @"%s\n";
@@ -234,6 +235,7 @@ exit_with_message (const char *reason, const char *argv0, bool request_mono)
 		LSOpenCFURLRef (url, NULL);
 		CFRelease (url);
 	}
+#endif
 	exit (1);
 }
 
