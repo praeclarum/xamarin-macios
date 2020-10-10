@@ -505,6 +505,158 @@ all-local:: $(RUNTIME_MAC_TARGETS)
 install-local:: $(RUNTIME_MAC_TARGETS)
 
 #
+# Xamarin.MacCatalyst
+#
+
+MACCAT_ARCHITECTURES = x86_64
+
+CLANG_ARCH = $(addprefix -arch ,$(MACCAT_ARCHITECTURES))
+MACCAT_CLANG = DEVELOPER_DIR=$(XCODE_DEVELOPER_ROOT) $(MAC_CC) -mmacosx-version-min=$(MIN_OSX_SDK_VERSION)
+
+MACCAT_SHIPPED_HEADERS = xamarin/launch.h
+
+MACCAT_OBJC_CFLAGS=-ObjC++ -std=c++14 -fno-exceptions -DMIN_XM_MONO_VERSION=\"$(MIN_XM_MONO_VERSION)\"
+MACCAT_CFLAGS = -mmacosx-version-min=$(MIN_OSX_SDK_VERSION) -Wall -DMONOMAC -g -DMIN_XM_MONO_VERSION=\"$(MIN_XM_MONO_VERSION)\"
+MACCAT_LDFLAGS = -mmacosx-version-min=$(MIN_OSX_SDK_VERSION) -framework AppKit
+
+MACCAT_STATIC_CFLAGS = $(MACCAT_CFLAGS)
+
+MACCAT_SOURCES = $(SHARED_SOURCES) $(SHARED_X86_64_SOURCES) launcher.m
+
+ALLOWED_UNDEFINED_SYMBOLS = _xamarin_enable_debug _xammac_setup
+
+MACCAT_LIBS =                   \
+	libextension.a			 \
+	libxammaccat.a              \
+	libxammaccat-debug.a        \
+	libxammaccat.dylib          \
+	libxammaccat-debug.dylib    \
+	libxammaccat-system.a       \
+	libxammaccat-system-debug.a \
+
+#
+# libxammaccat[-debug].a: (no defines)
+#    This is linked into the native executable when embedding the Mono runtime.
+#
+# libxammaccat[-debug].dylib: -DDYNAMIC_MONO_RUNTIME -DDYLIB
+#    This is not officially supported. It's used when not wanting to use mmp for
+#    whatever reason (usually to make build processes easier). There is no good
+#    reason to keep using it, since mmp now supports creating empty 'shell' apps
+#    with no assemblies, which the user can fill in as they want.
+#
+# libxammaccat-system[-debug].a: -DDYNAMIC_MONO_RUNTIME
+#    This is used linked into the native executable when using the system Mono (i.e. not)
+#    embedding the Mono runtime).
+#
+
+all-local:: $(TARGETS)
+
+define ObjTemplate
+DYNAMIC_DYLIB$(2)_OBJECTS   = $$(foreach src,$$(MACCAT_SOURCES),.libs/maccat/$$(basename $$(src))$(3).dylib.$(1).o)
+STATIC_LAUNCHER$(2)_OBJECTS = $$(foreach src,$$(MACCAT_SOURCES),.libs/maccat/$$(basename $$(src))$(3).static.$(1).o)
+SYSTEM_LAUNCHER$(2)_OBJECTS = $$(foreach src,$$(MACCAT_SOURCES),.libs/maccat/$$(basename $$(src))$(3).system.$(1).o)
+
+.libs/maccat/%$(3).dylib.$(1).o: %.m $$(SHARED_HEADERS) | .libs/maccat
+	$$(call Q_2,OBJC,  [maccat]) $(MACCAT_CLANG) -arch $(1) $(4) -c $$(MACCAT_OBJC_CFLAGS) $$(MACCAT_CFLAGS) -DDYNAMIC_MONO_RUNTIME -DDYLIB -o $$@ $$<
+
+.libs/maccat/%$(3).dylib.$(1).o: %.s $$(SHARED_HEADERS) | .libs/maccat
+	$$(call Q_2,ASM,   [maccat]) $(MACCAT_CLANG) -arch $(1) $(4) -c $$(MACCAT_CFLAGS) -DDYNAMIC_MONO_RUNTIME -DDYLIB -o $$@ $$<
+
+.libs/maccat/%$(3).static.$(1).o: %.s $$(SHARED_HEADERS) | .libs/maccat
+	$$(call Q_2,ASM,   [maccat]) $(MACCAT_CLANG) -arch $(1) $(4) -c $$(MACCAT_STATIC_CFLAGS) -o $$@ $$<
+
+.libs/maccat/%$(3).static.$(1).o: %.m $$(SHARED_HEADERS) | .libs/maccat
+	$$(call Q_2,OBJC,  [maccat]) $(MACCAT_CLANG) -arch $(1) $(4) $$(MACCAT_OBJC_CFLAGS) -c $$(MACCAT_STATIC_CFLAGS) -o $$@ $$<
+
+.libs/maccat/%$(3).system.$(1).o: %.m $$(SHARED_HEADERS) | .libs/maccat
+	$$(call Q_2,OBJC,  [maccat]) $(MACCAT_CLANG) -arch $(1) $(4) $$(MACCAT_OBJC_CFLAGS) -c $$(MACCAT_CFLAGS) -DDYNAMIC_MONO_RUNTIME -o $$@ $$<
+
+.libs/maccat/%$(3).system.$(1).o: %.s $$(SHARED_HEADERS) | .libs/maccat
+	$$(call Q_2,ASM,   [maccat]) $(MACCAT_CLANG) -arch $(1) $(4) -c $(MACCAT_CFLAGS) -DDYNAMIC_MONO_RUNTIME -o $$@ $$<
+
+.libs/maccat/libxammaccat$(3).$(1).dylib: $$(DYNAMIC_DYLIB$(2)_OBJECTS)
+	$$(call Q_2,LD,    [maccat]) $(MACCAT_CLANG) -arch $(1) -dynamiclib $$(MACCAT_LDFLAGS) -Wl,-install_name,libxammaccat$(3).dylib -o $$@ $$^ $$(addprefix -Xlinker -U -Xlinker ,$$(ALLOWED_UNDEFINED_SYMBOLS))
+
+.libs/maccat/libxammaccat$(3).$(1).a: $$(STATIC_LAUNCHER$(2)_OBJECTS)
+	$$(call Q_2,LIB,   [maccat]) xcrun libtool -no_warning_for_no_symbols -static -o $$@ $$^
+
+.libs/maccat/libxammaccat-system$(3).$(1).a: $$(SYSTEM_LAUNCHER$(2)_OBJECTS)
+	$$(call Q_2,LIB,   [maccat]) xcrun libtool -no_warning_for_no_symbols -static -o $$@ $$^
+
+endef
+
+$(eval $(call ObjTemplate,x86_64,64,,,64))
+$(eval $(call ObjTemplate,x86_64,DEBUG64,-debug,-DDEBUG,64))
+
+$(foreach arch,$(MACCAT_ARCHITECTURES),.libs/maccat/extension-main.$(arch).o): EXTRA_DEFINES=-DEXTENSION
+
+.libs/maccat/extension-main.%.o: | .libs/maccat
+	$(Q) rm -f $@
+	$(call Q_2,CC,  [maccat]) $(MACCAT_CLANG) -c -DEXTENSION extension-main.m -arch $* -o $@
+
+.libs/maccat/libextension.%.a: .libs/maccat/extension-main.%.o
+	$(Q) rm -f $@
+	$(call Q_2,AR,    [maccat]) $(DEVICE_BIN_PATH)/ar cru $@ $^
+
+.libs/maccat/libextension.a: $(foreach arch,$(MACCAT_ARCHITECTURES),.libs/maccat/libextension.$(arch).a)
+	$(Q) rm -f $@
+	$(call Q_2,LIPO,  [maccat]) $(DEVICE_BIN_PATH)/lipo $^ -create -output $@
+
+.libs/maccat/libxammaccat-debug.dylib: .libs/maccat/libxammaccat-debug.x86_64.dylib
+	$(call Q_2,LIPO,  [maccat]) xcrun lipo -create $^ -o $@
+
+.libs/maccat/libxammaccat.dylib: .libs/maccat/libxammaccat.x86_64.dylib
+	$(call Q_2,LIPO,  [maccat]) xcrun lipo -create $^ -o $@
+
+.libs/maccat/libxammaccat-debug.a: .libs/maccat/libxammaccat-debug.x86_64.a
+	$(call Q_2,LIPO,  [maccat]) xcrun lipo -create $^ -o $@
+
+.libs/maccat/libxammaccat.a: .libs/maccat/libxammaccat.x86_64.a
+	$(call Q_2,LIPO,  [maccat]) xcrun lipo -create $^ -o $@
+
+.libs/maccat/libxammaccat-system-debug.a: .libs/maccat/libxammaccat-system-debug.x86_64.a
+	$(call Q_2,LIPO,  [maccat]) xcrun lipo -create $^ -o $@
+
+.libs/maccat/libxammaccat-system.a: .libs/maccat/libxammaccat-system.x86_64.a
+	$(call Q_2,LIPO,  [maccat]) xcrun lipo -create $^ -o $@
+
+.libs/maccat/libxammaccat-%.a: $(MACIOS_BINARIES_PATH)/libxammaccat-%.a | .libs/maccat
+	$(Q) $(CP) $< $@
+
+RUNTIME_MACCAT_TARGETS_DIRS +=                                    \
+	.libs/maccat                                                  \
+	$(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib             \
+	$(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib/mono        \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/lib                     \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/include/xamarin         \
+
+RUNTIME_MACCAT_TARGETS +=                                                                                \
+	$(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib/XamMacLauncher                                     \
+	$(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib/mono/XamMacLauncher                                \
+	$(foreach file,$(SHIPPED_HEADERS),$(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/include/$(file))             \
+	$(foreach file,$(MACCAT_SHIPPED_HEADERS),$(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/include/$(file))         \
+	$(foreach file,$(MACCAT_LIBS),$(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/lib/$(file))                        \
+
+# The XamMacLauncher file must exist for VSfM to be able to open XM/Classic projects (so that people can use the migration wizard)
+$(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib/XamMacLauncher: | $(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib
+	$(Q) touch $@
+
+$(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/lib/%: .libs/maccat/% | $(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/lib
+	$(Q) $(CP) $< $@
+
+$(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib/mono/XamMacLauncher: | $(MACCAT_DESTDIR)$(MACCAT_FRAMEWORK_CURRENT_DIR)/lib/mono
+	$(Q) ln -sF ../XamMacLauncher $@
+
+$(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/include/%.h: %.h | $(MACCAT_DESTDIR)$(XAMARIN_MACOS_SDK)/include/xamarin
+	$(Q) install -m 0644 $< $@
+
+$(RUNTIME_MACCAT_TARGETS_DIRS):
+	$(Q) mkdir -p $@
+
+all-local:: $(RUNTIME_MACCAT_TARGETS)
+install-local:: $(RUNTIME_MACCAT_TARGETS)
+
+#
 # .NET
 #
 
