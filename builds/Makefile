@@ -711,6 +711,59 @@ $(MAC_DIRECTORIES):
 install-mac: $(MAC_TARGETS)
 
 #
+# Xamarin.MacCatalyst Mono runtime pieces
+#
+install-local:: install-maccat
+all-local:: install-maccat
+
+MACCAT_MONO_MAC_SDK_DESTDIR=$(MONO_MAC_SDK_DESTDIR)
+
+MACCAT_DIRECTORIES = \
+	$(MACCAT_DESTDIR)$(MAC_FRAMEWORK_CURRENT_DIR)/bin \
+	$(MACCAT_DESTDIR)$(MAC_FRAMEWORK_CURRENT_DIR)/lib \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/etc/mono/assemblies/System \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/Frameworks \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/pkgconfig \
+
+MACCAT_TARGETS = \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmonosgen-2.0.a                            \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-profiler-log.a                       \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-native-compat.a                      \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-native-unified.a                     \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmonosgen-2.0.dylib                        \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libMonoPosixHelper.dylib                     \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-native-compat.dylib                  \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-native-unified.dylib                 \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-2.0.dylib                            \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-2.0.a                                \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/pkgconfig/mono-2.pc                          \
+	$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/etc/mono/assemblies/System/System.config         \
+	$(MACCAT_DESTDIR)$(MAC_FRAMEWORK_CURRENT_DIR)/bin/mono-sgen                            \
+
+$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/%: .stamp-$(MONO_BUILD_MODE) | $(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib
+	$(Q) $(CP) $(MACCAT_MONO_MAC_SDK_DESTDIR)/mac-libs/$(notdir $@) $@
+
+$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-2.0.dylib $(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/libmono-2.0.a: | $(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib
+	$(Q) ln -sf libmonosgen-2.0$(suffix $@) $@
+
+# $(MONO_MAC_SDK_DESTDIR)/mac-pkgconfig/mono-2.pc: .stamp-$(MONO_BUILD_MODE)
+
+$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/pkgconfig/mono-2.pc: $(MONO_MAC_SDK_DESTDIR)/mac-pkgconfig/mono-2.pc | $(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/lib/pkgconfig
+	$(Q) $(CP) $< $@
+
+$(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/etc/mono/assemblies/System/System.config: mac-System.config | $(MACCAT_DESTDIR)$(XAMARIN_MACCAT_SDK)/etc/mono/assemblies/System
+	$(Q) $(CP) $< $@
+
+$(MACCAT_DESTDIR)$(MAC_FRAMEWORK_CURRENT_DIR)/bin/mono-sgen: .stamp-$(MONO_BUILD_MODE) | $(MACCAT_DESTDIR)$(MAC_FRAMEWORK_CURRENT_DIR)/bin
+	$(Q) install -m 0755 $(MONO_MAC_SDK_DESTDIR)/mac-bin/mono-sgen $@
+
+$(MACCAT_DIRECTORIES):
+	$(Q) mkdir -p $@
+
+install-maccat: $(MACCAT_TARGETS)
+
+#
 # Xamarin.iOS/WatchOS/TVOS common pieces
 #
 install-local:: install-ios-common
